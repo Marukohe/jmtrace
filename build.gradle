@@ -1,5 +1,6 @@
 plugins {
     id 'java'
+//    id 'java-library'
 }
 
 group 'org.example'
@@ -9,14 +10,18 @@ repositories {
     mavenCentral()
 }
 
-dependencies {
-    implementation 'org.ow2.asm:asm:9.0'
-}
-
 jar {
+    from {
+        configurations.compileClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+
     manifest {
         attributes 'Premain-Class': 'PreMainAgent'
         attributes 'Can-Redefine-Classes': 'true'
         attributes 'Can-Retransform-Classes': 'true'
     }
+}
+
+dependencies {
+    implementation 'org.ow2.asm:asm:9.0'
 }
