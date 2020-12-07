@@ -2,6 +2,8 @@ import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 
+import java.util.logging.LoggingPermission;
+
 public class MethodVisitorAdapter extends MethodVisitor {
 
     private final MethodVisitor mv;
@@ -13,27 +15,73 @@ public class MethodVisitorAdapter extends MethodVisitor {
 
     @Override
     public void visitFieldInsn(int opcode, String owner, String name, String descriptor) {
+//        System.out.println("=====================");
+//        System.out.println("owner: " + owner);
+//        System.out.println("name: " + name);
+//        System.out.println("descriptor: " + descriptor);
+//        System.out.println("=====================");
+        if(owner.startsWith("java") || owner.startsWith("sun")) {
+            mv.visitFieldInsn(opcode, owner, name, descriptor);
+            return;
+        }
+
         switch (opcode) {
             case Opcodes.GETSTATIC:
-//                hack(mv, "getstatic");
-                mv.visitInsn(Opcodes.ICONST_1);
+            case Opcodes.PUTSTATIC:
+                mv.visitLdcInsn(owner);
+                mv.visitLdcInsn(owner + "." + name);
+                if(opcode == Opcodes.GETSTATIC) mv.visitInsn(Opcodes.ICONST_1);
+                else mv.visitInsn(Opcodes.ICONST_2);
+                mv.visitInsn(Opcodes.ICONST_M1);
                 mv.visitMethodInsn(
                         Opcodes.INVOKESTATIC,
                         Type.getInternalName(TraceInsn.class),
                         "traceinsn",
-                        "(I)V",
+                        "(Ljava/lang/Object;Ljava/lang/String;II)V",
                         false
                 );
                 break;
-//            case Opcodes.PUTSTATIC:
-//                hack(mv, "putstatic");
-//                break;
 //            case Opcodes.GETFIELD:
-//                hack(mv, "getfield");
+//                // [obj] -> [obj, obj, name, rw, index]
+//                mv.visitInsn(Opcodes.DUP);
+//                mv.visitLdcInsn(owner + "." + name);
+//                mv.visitInsn(Opcodes.ICONST_1);
+//                mv.visitInsn(Opcodes.ICONST_M1);
+//                mv.visitMethodInsn(
+//                        Opcodes.INVOKESTATIC,
+//                        Type.getInternalName(TraceInsn.class),
+//                        "traceinsn",
+//                        "(Ljava/lang/Object;Ljava/lang/String;II)V",
+//                        false
+//                );
 //                break;
-//            case Opcodes.PUTFIELD:
-//                hack(mv, "putfield");
-//                break;
+            case Opcodes.PUTFIELD:
+                /*
+                 * [obj, value] ->* [obj, value, obj] ->* [obj, value, obj, name, rw, index]
+                 */
+                if(descriptor.startsWith("[") || (!descriptor.equals("D") && !descriptor.equals("L"))) {
+                    // category 1
+                    mv.visitInsn(Opcodes.DUP2);
+                    mv.visitInsn(Opcodes.POP);
+                } else {
+//                    System.out.println(descriptor);
+                    mv.visitInsn(Opcodes.DUP2_X1);
+                    mv.visitInsn(Opcodes.POP2);
+                    mv.visitInsn(Opcodes.DUP_X2);
+                }
+
+//                mv.visitLdcInsn(owner);
+                mv.visitLdcInsn(owner + "." + name);
+                mv.visitInsn(Opcodes.ICONST_2);
+                mv.visitInsn(Opcodes.ICONST_M1);
+                mv.visitMethodInsn(
+                        Opcodes.INVOKESTATIC,
+                        Type.getInternalName(TraceInsn.class),
+                        "traceinsn",
+                        "(Ljava/lang/Object;Ljava/lang/String;II)V",
+                        false
+                );
+                break;
             default:
                 break;
         }
@@ -42,39 +90,35 @@ public class MethodVisitorAdapter extends MethodVisitor {
     }
 
 //    @Override
-//    public void visitVarInsn(int opcode, int var) {
-//        if(opcode == Opcodes.ALOAD) {
-//            hack(mv, "aload");
-//        } else if(opcode == Opcodes.ASTORE) {
-//            hack(mv, "astore");
+//    public void visitInsn(int opcode) {
+//        switch (opcode) {
+//            case Opcodes.IALOAD:
+//            case Opcodes.LALOAD:
+//            case Opcodes.FALOAD:
+//            case Opcodes.DALOAD:
+//            case Opcodes.AALOAD:
+//            case Opcodes.BALOAD:
+//            case Opcodes.CALOAD:
+//            case Opcodes.SALOAD:
+//                // [arrref, index]  ->  [rw, obj, name, index]
+////                mv.visitInsn(Opcodes.ICONST_1);
+//
+//                break;
+//            case Opcodes.IASTORE:
+//            case Opcodes.LASTORE:
+//            case Opcodes.FASTORE:
+//            case Opcodes.DASTORE:
+//            case Opcodes.AASTORE:
+//            case Opcodes.BASTORE:
+//            case Opcodes.CASTORE:
+//            case Opcodes.SASTORE:
+////                mv.visitInsn(Opcodes.ICONST_0);
+//                break;
+//            default:
+//                break;
 //        }
-//        super.visitVarInsn(opcode, var);
+//
+//        mv.visitInsn(opcode);
 //    }
 
-//    private static void hack(MethodVisitor mv, String msg) {
-//
-//        mv.visitInsn(Opcodes.ICONST_1);
-//        mv.visitMethodInsn(
-//                Opcodes.INVOKESTATIC,
-//                Type.getInternalName(TraceInsn.class),
-//                "traceinsn",
-//                "(I)V",
-//                false
-//        );
-//        mv.visitFieldInsn(
-//                Opcodes.GETSTATIC,
-//                Type.getInternalName(System.class),
-//                "out",
-//                Type.getDescriptor(PrintStream.class)
-//        );
-//        mv.visitLdcInsn(msg);
-//        mv.visitMethodInsn(
-//                Opcodes.INVOKEVIRTUAL,
-//                Type.getInternalName(PrintStream.class),
-//                "println",
-//                "(Ljava/lang/String;)V",
-//                false
-//        );
-//    }
-//
 }

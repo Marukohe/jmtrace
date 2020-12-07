@@ -19,11 +19,10 @@ public class PreMainAgent {
         public byte[] transform(ClassLoader loader, String className, Class<?> classBeingRedefined,
                                 ProtectionDomain protectionDomain, byte[] classfileBuffer)
                 throws IllegalClassFormatException {
-            if(className.length() >= 5) {
-                if(className.startsWith("java/") || className.startsWith("jdk/") || className.startsWith("sun/")) {
-                    return classfileBuffer;
-                }
+            if(className.startsWith("java") || className.startsWith("jdk") || className.startsWith("sun")) {
+                return classfileBuffer;
             }
+
             ClassReader cr = new ClassReader(classfileBuffer);
             ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
             ClassVisitor cv = new ClassVisitorAdapter(cw);
