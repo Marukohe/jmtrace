@@ -1,5 +1,4 @@
-.idea/codestream.xml
 .idea
 .gradle
 build
-.DS_Store
+**/.DS_Store
