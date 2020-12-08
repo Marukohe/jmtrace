@@ -1,0 +1,3 @@
+#!/bin/bash
+JMPATH=./build/libs/jmtrace-1.0-SNAPSHOT.jar
+java -javaagent:${JMPATH} -jar $@

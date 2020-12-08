@@ -41,7 +41,7 @@ public class MethodVisitorAdapter extends MethodVisitor {
                 );
                 break;
             case Opcodes.GETFIELD:
-                // [obj] -> [obj, obj, name, rw, index]
+                // [obj] -> [obj, obj, index, name, rw]
                 mv.visitInsn(Opcodes.DUP);
                 mv.visitInsn(Opcodes.ICONST_M1);
                 mv.visitLdcInsn(owner + "." + name);
@@ -57,7 +57,7 @@ public class MethodVisitorAdapter extends MethodVisitor {
                 break;
             case Opcodes.PUTFIELD:
                 /*
-                 * [obj, value] ->* [obj, value, obj] ->* [obj, value, obj, name, rw, index]
+                 * [obj, value] ->* [obj, value, obj] ->* [obj, value, obj, index, name, rw]
                  */
                 if(descriptor.startsWith("[") || (!descriptor.equals("D") && !descriptor.equals("L"))) {
                     // category 1
@@ -70,7 +70,6 @@ public class MethodVisitorAdapter extends MethodVisitor {
                     mv.visitInsn(Opcodes.DUP_X2);
                 }
                 mv.visitInsn(Opcodes.ICONST_M1);
-//                mv.visitLdcInsn(owner);
                 mv.visitLdcInsn(owner + "." + name);
                 mv.visitInsn(Opcodes.ICONST_2);
 

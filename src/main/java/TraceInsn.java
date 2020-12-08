@@ -2,7 +2,7 @@ import static java.lang.Integer.toHexString;
 
 public class TraceInsn {
     public static void traceinsn (Object obj, int index, String name, int RWFlag) {
-        // R 1032 b026324c6904b2a9 cn.edu.nju.ics.Foo.someField
+        // R ThreadId ObjectId someField
         String out = RWFlag == 1 ? "R " : "W ";
         out += Thread.currentThread().getId() + " ";
         out += toHexString(System.identityHashCode(obj)) + " ";
